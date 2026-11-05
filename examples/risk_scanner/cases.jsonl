@@ -1,0 +1,30 @@
+# Hand-labelled snippets. "expected" is what a careful reviewer would flag, written BEFORE running the scanner.
+{"id": "aws-key", "tags": ["secrets"], "input": {"path": "app/config.py", "lines": ["KEY = 'AKIAIOSFODNN7EXAMPLE'"]}, "expected": ["SEC001"]}
+{"id": "private-key", "tags": ["secrets"], "input": {"path": "deploy/id.py", "lines": ["K = '''-----BEGIN RSA PRIVATE KEY-----'''"]}, "expected": ["SEC002"]}
+{"id": "hardcoded-password", "tags": ["secrets"], "input": {"path": "app/db.py", "lines": ["db_password = 'Sup3rS3cretValue!'"]}, "expected": ["SEC004"]}
+{"id": "secret-from-env", "tags": ["secrets", "clean"], "input": {"path": "app/db.py", "lines": ["db_password = os.environ['DB_PASSWORD']"]}, "expected": []}
+{"id": "password-field-name-only", "tags": ["secrets", "clean"], "input": {"path": "app/forms.py", "lines": ["password_field = forms.CharField(widget=forms.PasswordInput)"]}, "expected": []}
+{"id": "sql-concat", "tags": ["injection"], "input": {"path": "app/repo.py", "lines": ["cur.execute(\"SELECT * FROM users WHERE name = '\" + name + \"'\")"]}, "expected": ["INJ001"]}
+{"id": "sql-fstring", "tags": ["injection"], "input": {"path": "app/repo.py", "lines": ["cur.execute(f\"DELETE FROM orders WHERE id = {order_id}\")"]}, "expected": ["INJ001"]}
+{"id": "sql-parameterised", "tags": ["injection", "clean"], "input": {"path": "app/repo.py", "lines": ["cur.execute(\"SELECT * FROM users WHERE name = %s\", (name,))"]}, "expected": []}
+{"id": "eval-call", "tags": ["execution"], "input": {"path": "app/calc.py", "lines": ["result = eval(user_expression)"]}, "expected": ["EXE001"]}
+{"id": "literal-eval-is-safe", "tags": ["execution", "clean"], "input": {"path": "app/calc.py", "lines": ["value = ast.literal_eval(text)"]}, "expected": []}
+{"id": "model-evaluate-method", "tags": ["execution", "clean"], "input": {"path": "app/ml.py", "lines": ["score = model.eval()"]}, "expected": []}
+{"id": "shell-true", "tags": ["execution"], "input": {"path": "app/run.py", "lines": ["subprocess.run(cmd, shell=True)"]}, "expected": ["EXE003"]}
+{"id": "subprocess-list", "tags": ["execution", "clean"], "input": {"path": "app/run.py", "lines": ["subprocess.run(['git', 'status'], check=True)"]}, "expected": []}
+{"id": "pickle-load", "tags": ["deserialisation"], "input": {"path": "app/cache.py", "lines": ["obj = pickle.loads(blob)"]}, "expected": ["DES001"]}
+{"id": "yaml-unsafe", "tags": ["deserialisation"], "input": {"path": "app/conf.py", "lines": ["cfg = yaml.load(text)"]}, "expected": ["DES002"]}
+{"id": "yaml-safe", "tags": ["deserialisation", "clean"], "input": {"path": "app/conf.py", "lines": ["cfg = yaml.safe_load(text)"]}, "expected": []}
+{"id": "tls-off", "tags": ["transport"], "input": {"path": "app/http.py", "lines": ["requests.get(url, verify=False)"]}, "expected": ["TLS001"]}
+{"id": "tls-on", "tags": ["transport", "clean"], "input": {"path": "app/http.py", "lines": ["requests.get(url, timeout=5)"]}, "expected": []}
+{"id": "md5-password", "tags": ["crypto"], "input": {"path": "app/auth.py", "lines": ["stored = hashlib.md5(password.encode()).hexdigest()"]}, "expected": ["CRY002"]}
+{"id": "sha256-checksum", "tags": ["crypto", "clean"], "input": {"path": "app/files.py", "lines": ["digest = hashlib.sha256(data).hexdigest()"]}, "expected": []}
+{"id": "drop-table", "tags": ["migrations"], "input": {"path": "db/V9__cleanup.sql", "lines": ["DROP TABLE legacy_orders;"]}, "expected": ["MIG001"]}
+{"id": "delete-everything", "tags": ["migrations"], "input": {"path": "db/V10__reset.sql", "lines": ["DELETE FROM sessions;"]}, "expected": ["MIG002"]}
+{"id": "delete-with-filter", "tags": ["migrations", "clean"], "input": {"path": "db/V11__prune.sql", "lines": ["DELETE FROM sessions WHERE expires_at < now();"]}, "expected": []}
+{"id": "innerhtml", "tags": ["web"], "input": {"path": "web/view.js", "lines": ["el.innerHTML = userComment;"]}, "expected": ["XSS001"]}
+{"id": "textcontent", "tags": ["web", "clean"], "input": {"path": "web/view.js", "lines": ["el.textContent = userComment;"]}, "expected": []}
+{"id": "two-problems-one-file", "tags": ["secrets", "execution"], "input": {"path": "app/mix.py", "lines": ["token = 'ghp_abcdefghijklmnopqrstuvwxyz0123456789'", "os.system(cmd)", "eval(x)"]}, "expected": ["SEC003", "EXE003", "EXE001"]}
+{"id": "plain-http", "tags": ["transport"], "input": {"path": "app/urls.py", "lines": ["API = 'http://payments.internal.example/v1'"]}, "expected": ["NET001"]}
+{"id": "localhost-http-is-fine", "tags": ["transport", "clean"], "input": {"path": "app/urls.py", "lines": ["DEV = 'http://localhost:8080/health'"]}, "expected": []}
+{"id": "debug-print", "tags": ["debug"], "input": {"path": "app/svc.py", "lines": ["breakpoint()"]}, "expected": ["DBG001"]}

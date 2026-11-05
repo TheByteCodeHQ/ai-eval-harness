@@ -1,0 +1,15 @@
+{
+  "name": "risk-scanner-rules",
+  "description": "Does the rule engine flag the right rules, and only those, on hand-labelled snippets?",
+  "dataset": "cases.jsonl",
+  "system": "weaker:scan_snippet_quieter",
+  "min_pass_rate": 0.85,
+  "scorers": [
+    {"type": "json_schema", "name": "shape", "schema": {"type": "object", "required": ["findings"],
+      "properties": {"findings": {"type": "array", "items": {"type": "object", "required": ["rule_id"]}}}}},
+    {"type": "set_match", "name": "rules", "output_path": "findings.*.rule_id", "metric": "f1", "threshold": 1.0},
+    {"type": "set_match", "name": "recall", "output_path": "findings.*.rule_id", "metric": "recall", "threshold": 1.0, "gating": false},
+    {"type": "set_match", "name": "precision", "output_path": "findings.*.rule_id", "metric": "precision", "threshold": 1.0, "gating": false},
+    {"type": "latency", "max_seconds": 1.0}
+  ]
+}

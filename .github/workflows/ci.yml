@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python-version: ["3.10", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+      - run: pip install -e ".[dev]"
+      - run: ruff check .
+      - run: pytest
+
+  example:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e . git+https://github.com/TheByteCodeHQ/ai-code-risk-scanner
+      - name: Evaluate the risk scanner (must pass its gate)
+        run: aieval run examples/risk_scanner/suite.json --min-pass-rate 1 --save runs/base.json
+      - name: A weaker scanner must be caught as a regression
+        run: |
+          aieval run examples/risk_scanner/suite_weaker.json --save runs/weaker.json || true
+          if aieval compare runs/base.json runs/weaker.json --fail-on-regression; then echo "regression was NOT caught"; exit 1; fi
